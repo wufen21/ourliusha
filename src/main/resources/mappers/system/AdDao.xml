@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace必须指向Dao接口 -->
+<mapper namespace="com.framework.loippi.dao.AdDao">
+	
+	<resultMap id="AdResultMap" type="com.framework.loippi.entity.Ad">
+		<id property="id" column="ID" />
+		<result property="createDate" column="CREATE_DATE" />
+		<result property="startDate" column="START_DATE" />
+		<result property="endDate" column="END_DATE" />
+		<result property="creator" column="CREATOR" />
+		<result property="title" column="TITLE" />
+		<result property="url" column="URL" />
+		<result property="image" column="IMAGE" />
+		<result property="sorts" column="SORTS" />
+	</resultMap>
+	
+	<!-- 定义可重用的SQL代码段，可以包含在其他语句中 -->
+	<sql id="base_column">
+		 ID ,CREATE_DATE ,START_DATE ,END_DATE ,CREATOR ,TITLE ,URL ,SORTS,IMAGE
+	</sql>
+	
+	<sql id="base_value_column">
+		#{id,jdbcType=BIGINT} ,#{createDate} ,#{startDate} ,#{endDate},#{creator} ,#{title} ,#{url} ,#{sorts},#{image}
+	</sql>
+	
+	<!-- 定义可重用的WHERE SQL公共代码段，可以包含在其他语句中 -->
+	<sql id="where_column">
+		<if test="id != null and id != ''">
+			AND ID = #{id,jdbcType=BIGINT}
+		</if>
+		<if test="title != null and title != ''">
+			AND TITLE  like CONCAT('%',#{title},'%')
+		</if>
+		<if test="creator != null and creator != ''">
+			AND CREATOR = #{creator,jdbcType=BIGINT}
+		</if>
+	</sql>
+	
+	<sql id="set_column">
+		<if test="id != null and id != ''">
+			ID = #{id,jdbcType=BIGINT},
+		</if>
+		<if test="title != null and title != ''">
+			TITLE = #{title,jdbcType=VARCHAR} ,
+		</if>
+		<if test="url != null and url != ''">
+			URL = #{url,jdbcType=VARCHAR},
+		</if>
+		<if test="startDate != null and startDate != ''">
+			START_DATE = #{startDate},
+		</if>
+		<if test="endDate != null and endDate != ''">
+			END_DATE = #{endDate},
+		</if>
+		<if test="sorts != null and sorts != ''">
+			SORTS = #{sorts},
+		</if>
+		<if test="image != null and image != ''">
+			IMAGE = #{image}
+		</if>
+	</sql>
+
+	<select id="find" resultMap="AdResultMap">
+		SELECT	<include refid="base_column" />
+		FROM	T_SYSTEM_AD
+		WHERE	ID=#{id,jdbcType=BIGINT}
+	</select>
+	
+	<select id="findAll" resultMap="AdResultMap">
+		SELECT	<include refid="base_column" />
+		FROM	T_SYSTEM_AD
+	</select>
+	
+	<insert id="insert" parameterType="com.framework.loippi.entity.Ad">
+		<selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">  
+	          SELECT LAST_INSERT_ID() AS ID    
+	    </selectKey>  
+		INSERT T_SYSTEM_AD 
+				(<include refid="base_column" /> )
+		VALUES	(<include refid="base_value_column" />)
+	</insert>
+	
+	<update id="update" parameterType="com.framework.loippi.entity.Ad">
+		UPDATE	T_SYSTEM_AD
+		<set>
+			<include refid="set_column" />
+		</set>
+		WHERE	ID = #{id,jdbcType=BIGINT}
+	</update>
+	
+	<delete id="delete">
+		DELETE	FROM T_SYSTEM_AD
+		WHERE	ID = #{id,jdbcType=BIGINT}
+	</delete>
+	
+	<delete id="deleteAll">
+		DELETE	FROM T_SYSTEM_AD
+		WHERE	ID	IN
+    	<foreach item="AdId" index="index" collection="ids" open="(" separator="," close=")">
+	  		#{AdId} 
+		</foreach>
+	</delete>
+	
+	<select id="findByParams" resultMap="AdResultMap">
+		SELECT	<include refid="base_column" />
+		FROM 	T_SYSTEM_AD
+		<where> 1=1
+			<include refid="where_column" />
+			  <if test="order != null and order != ''">
+		order by  ${order}
+	     </if>
+	     
+		<if test="pageNumber != null  and pageSize !=null ">
+			limit  #{pageNumber,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+	     </if>
+		</where>
+	</select>
+	
+	<select id="findByPage" resultMap="AdResultMap">
+		SELECT
+		<include refid="base_column" />
+		FROM T_SYSTEM_AD
+		<where> 1=1
+			<include refid="where_column" />
+		</where>
+		ORDER BY SORTS
+	</select>
+						<!-- 统计记录数 -->
+	<select id="count" resultType="long">
+		SELECT COUNT(*) FROM T_SYSTEM_AD
+		<where> 
+			<include refid="where_column" />
+		</where>
+	</select>
+	
+</mapper> 

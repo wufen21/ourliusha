@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace必须指向Dao接口 -->
+<mapper namespace="com.framework.loippi.dao.ArticleDao">
+	
+	<resultMap id="ArticleResultMap" type="com.framework.loippi.entity.Article">
+		<id property="id" column="ID" />
+		<result property="createDate" column="CREATE_DATE" />
+		<result property="title" column="TITLE" />
+		<result property="content" column="CONTENT" />
+		<result property="image" column="IMAGE" />
+		<result property="categoryId" column="ARTICLE_CATEGORY_ID" />
+		<result property="creator" column="CREATOR" />
+		<result property="show" column="IS_SHOW" />
+		<result property="publishDate" column="PUBLISH_DATE" />
+		<result property="unRead" column="UNREAD" />
+		
+		<association property="category" column="ARTICLE_CATEGORY_ID" select="com.framework.loippi.dao.ArticleCategoryDao.find"/>
+	</resultMap>
+	
+	<!-- 定义可重用的SQL代码段，可以包含在其他语句中 -->
+	<sql id="base_column">
+		 ID ,CREATE_DATE ,TITLE ,CONTENT ,IMAGE,ARTICLE_CATEGORY_ID,CREATOR,IS_SHOW,PUBLISH_DATE
+		 
+	</sql>
+	
+	<sql id="base_value_column">
+		#{id,jdbcType=BIGINT} ,#{createDate} ,#{title} ,#{content},#{image},#{categoryId} ,#{creator},#{show},#{publishDate}
+		
+	</sql>
+	
+	<!-- 定义可重用的WHERE SQL公共代码段，可以包含在其他语句中 -->
+	<sql id="where_column">
+		<if test="id != null and id != ''">
+			AND ID = #{id,jdbcType=BIGINT}
+		</if>
+		<if test="title != null and title != ''">
+			AND TITLE  like CONCAT('%',#{title},'%')
+		</if>
+		<if test="content != null and content != ''">
+			AND CONTENT  like CONCAT('%',#{content},'%')
+		</if>
+		<if test="show != null ">
+			AND IS_SHOW = #{show,jdbcType=BOOLEAN}
+		</if>
+		<if test="categoryId != null and categoryId != ''">
+			AND ARTICLE_CATEGORY_ID = #{categoryId,jdbcType=BIGINT}
+		</if>
+		<if test="publishDate != null and publishDate != ''">
+			AND DATE_FORMAT(PUBLISH_DATE,'%Y-%m-%d') = DATE_FORMAT(#{startTime,jdbcType=TIMESTAMP},'%Y-%m-%d')
+		</if>
+		
+		<if test="startTime != null and startTime != ''">
+			AND PUBLISH_DATE <![CDATA[>=]]> #{startTime,jdbcType=TIMESTAMP}
+		</if>
+		
+		<if test="endTime != null and endTime != ''">
+			AND PUBLISH_DATE  <![CDATA[<]]> #{endTime,jdbcType=TIMESTAMP}
+		</if>
+		
+	</sql>
+	
+	<sql id="set_column">
+		<if test="id != null and id != ''">
+			ID = #{id,jdbcType=BIGINT},
+		</if>
+		<if test="title != null and title != ''">
+			TITLE = #{title,jdbcType=VARCHAR} ,
+		</if>
+		<if test="image != null and image != ''">
+			IMAGE = #{image,jdbcType=VARCHAR} ,
+		</if>
+		<if test="show != null" >
+			IS_SHOW = #{show,jdbcType=BOOLEAN},
+		</if>
+		<if test="content != null and content != ''">
+			CONTENT = #{content,jdbcType=VARCHAR},
+		</if>
+		<if test="categoryId != null and categoryId != ''">
+			ARTICLE_CATEGORY_ID = #{categoryId,jdbcType=BIGINT},
+		</if>		
+		<if test="publishDate != null and publishDate != ''">
+			PUBLISH_DATE = #{publishDate,jdbcType=TIMESTAMP},
+		</if>
+		
+	</sql>
+	<select id="find" resultMap="ArticleResultMap">
+		SELECT	<include refid="base_column" />
+		FROM	T_SYSTEM_ARTICLE
+		WHERE	ID=#{id,jdbcType=BIGINT}
+		ORDER By CREATE_DATE DESC
+	</select>
+	
+	<select id="findAll" resultMap="ArticleResultMap">
+		SELECT	<include refid="base_column" />
+		FROM	T_SYSTEM_ARTICLE
+		ORDER By CREATE_DATE DESC
+	</select>
+	
+	<insert id="insert" parameterType="com.framework.loippi.entity.Article">
+		<selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">  
+	          SELECT LAST_INSERT_ID() AS ID    
+	  	 </selectKey>  
+		INSERT T_SYSTEM_ARTICLE 
+				(<include refid="base_column" /> )
+		VALUES	(<include refid="base_value_column" />)
+	</insert>
+	
+	<update id="update" parameterType="com.framework.loippi.entity.Article">
+		UPDATE	T_SYSTEM_ARTICLE
+		<set>
+			<include refid="set_column" />
+		</set>
+		WHERE	ID = #{id,jdbcType=BIGINT}
+	</update>
+	
+	<delete id="delete">
+		DELETE	FROM T_SYSTEM_ARTICLE
+		WHERE	ID = #{id,jdbcType=BIGINT}
+	</delete>
+	
+	<delete id="deleteAll">
+		DELETE	FROM T_SYSTEM_ARTICLE
+		WHERE	ID	IN
+    	<foreach item="ArticleId" index="index" collection="ids" open="(" separator="," close=")">
+	  		#{ArticleId} 
+		</foreach>
+	</delete>
+	
+	
+	<select id="findByParams" resultMap="ArticleResultMap">
+		SELECT	<include refid="base_column" />
+		FROM 	T_SYSTEM_ARTICLE
+		<where> 1=1
+			<include refid="where_column" />
+			
+			  <if test="order != null and order != ''">
+		order by  ${order}
+	     </if>
+	     
+		<if test="pageNumber != null  and pageSize !=null ">
+			limit  #{pageNumber,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+	     </if>
+			
+		</where>
+		ORDER By CREATE_DATE DESC
+	</select>
+	
+	<select id="findByPage" resultMap="ArticleResultMap">
+		SELECT
+		<include refid="base_column" />
+		FROM T_SYSTEM_ARTICLE
+		<where> 1=1
+			<include refid="where_column" />
+		</where>
+		ORDER By CREATE_DATE DESC
+	</select>
+	
+
+	
+	<!-- 统计记录数 -->
+	<select id="count" resultType="long">
+		SELECT COUNT(*) FROM T_SYSTEM_ARTICLE
+		<where> 
+			<include refid="where_column" />
+		</where>
+	</select>
+	
+</mapper> 

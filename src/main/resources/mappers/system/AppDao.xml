@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace必须指向Dao接口 -->
+<mapper namespace="com.framework.loippi.dao.AppDao">
+	
+	<resultMap id="AppResultMap" type="com.framework.loippi.entity.App">
+		<id property="id" column="ID" />
+		<result property="createDate" column="CREATE_DATE" />
+		<result property="updateDate" column="UPDATE_DATE" />
+		<result property="device" column="DEVICE" />
+		<result property="version" column="VERSION" />
+		<result property="content" column="CONTENT" />
+		<result property="url" column="URL" />
+		<result property="updator" column="UPDATOR" />
+		<result property="isForce" column="IS_FORCE" />
+	</resultMap>
+	
+	<!-- 定义可重用的SQL代码段，可以包含在其他语句中 -->
+	<sql id="base_column">
+		 ID ,CREATE_DATE ,UPDATE_DATE ,DEVICE ,VERSION ,CONTENT ,URL ,UPDATOR,IS_FORCE
+	</sql>
+	
+	<sql id="base_value_column">
+		#{id,jdbcType=BIGINT} ,#{createDate} ,#{updateDate} ,#{device},#{version} ,#{content} ,#{url} ,#{updator},#{isForce}
+	</sql>
+	
+	<!-- 定义可重用的WHERE SQL公共代码段，可以包含在其他语句中 -->
+	<sql id="where_column">
+		<if test="id != null and id != ''">
+			AND ID = #{id,jdbcType=BIGINT}
+		</if>
+		<if test="device != null and device != ''">
+			AND DEVICE = #{device,jdbcType=BIGINT}
+		</if>
+		<if test="updator != null and updator != ''">
+			AND UPDATOR = #{updator,jdbcType=BIGINT}
+		</if>
+	</sql>
+	
+	<sql id="set_column">
+		<if test="id != null and id != ''">
+			ID = #{id,jdbcType=BIGINT},
+		</if>
+		<if test="content != null and content != ''">
+			CONTENT = #{content,jdbcType=VARCHAR} ,
+		</if>
+		<if test="version != null and version != ''">
+			VERSION = #{version,jdbcType=VARCHAR},
+		</if>
+		<if test="url != null and url != ''">
+			URL = #{url,jdbcType=VARCHAR},
+		</if>
+		<if test="device != null and device != ''">
+			DEVICE = #{device,jdbcType=INTEGER},
+		</if>
+		<if test="updateDate != null and updateDate != ''">
+			UPDATE_DATE = #{updateDate},
+		</if>
+		<if test="updator != null and updator != ''">
+			SORTS = #{updator}
+		</if>
+		<if test="isForce != null and isForce != ''">
+			IS_FORCE = #{isForce}
+		</if>
+	</sql>
+
+	<select id="find" resultMap="AppResultMap">
+		SELECT	<include refid="base_column" />
+		FROM	T_SYSTEM_APP
+		WHERE	ID=#{id,jdbcType=BIGINT}
+	</select>
+	
+	<select id="findAll" resultMap="AppResultMap">
+		SELECT	<include refid="base_column" />
+		FROM	T_SYSTEM_APP
+	</select>
+	
+	<insert id="insert" parameterType="com.framework.loippi.entity.App">
+		<selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">  
+	          SELECT LAST_INSERT_ID() AS ID    
+	    </selectKey>  
+		INSERT T_SYSTEM_APP 
+				(<include refid="base_column" /> )
+		VALUES	(<include refid="base_value_column" />)
+	</insert>
+	
+	<update id="update" parameterType="com.framework.loippi.entity.App">
+		UPDATE	T_SYSTEM_APP
+		<set>
+			<include refid="set_column" />
+		</set>
+		WHERE	ID = #{id,jdbcType=BIGINT}
+	</update>
+	
+	<delete id="delete">
+		DELETE	FROM T_SYSTEM_APP
+		WHERE	ID = #{id,jdbcType=BIGINT}
+	</delete>
+	
+	<delete id="deleteAll">
+		DELETE	FROM T_SYSTEM_APP
+		WHERE	ID	IN
+    	<foreach item="AppId" index="index" collection="ids" open="(" separator="," close=")">
+	  		#{AppId} 
+		</foreach>
+	</delete>
+	
+	<select id="findByParams" resultMap="AppResultMap">
+		SELECT	<include refid="base_column" />
+		FROM 	T_SYSTEM_APP
+		<where> 1=1
+			<include refid="where_column" />
+			  <if test="order != null and order != ''">
+		order by  ${order}
+	     </if>
+	     
+		<if test="pageNumber != null  and pageSize !=null ">
+			limit  #{pageNumber,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+	     </if>
+		</where>
+	</select>
+	
+	<select id="findByPage" resultMap="AppResultMap">
+		SELECT
+		<include refid="base_column" />
+		FROM T_SYSTEM_APP
+		<where> 1=1
+			<include refid="where_column" />
+		</where>
+	</select>
+						<!-- 统计记录数 -->
+	<select id="count" resultType="long">
+		SELECT COUNT(*) FROM T_SYSTEM_APP
+		<where> 
+			<include refid="where_column" />
+		</where>
+	</select>
+</mapper> 

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.1.xsd
+	    http://www.springframework.org/schema/tx
+	    http://www.springframework.org/schema/tx/spring-tx-4.1.xsd
+        http://www.springframework.org/schema/mvc 
+        http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd 
+        http://code.alibabatech.com/schema/dubbo          
+    	http://code.alibabatech.com/schema/dubbo/dubbo.xsd   
+    	http://www.springframework.org/schema/aop 
+        http://www.springframework.org/schema/aop/spring-aop-4.1.xsd"
+	default-lazy-init="true">
+	<context:property-placeholder location="classpath*:/loippi.config.properties" ignore-resource-not-found="true" ignore-unresolvable="true" />
+	
+	<context:component-scan base-package="com.framework.loippi" use-default-filters="false">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	
+	
+	<!-- =========================================================
+         Shiro Spring-specific integration
+         ========================================================= -->
+         
+     <!-- Enable Shiro Annotations for Spring-configured beans.  Only run after
+         the lifecycleBeanProcessor has run: -->
+	<bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+		<property ref="securityManager" name="securityManager" />
+	</bean>
+	<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="exceptionMappings">
+			<props>
+				<prop key="org.apache.shiro.authz.UnauthorizedException">/admin/common/unauthorized</prop>
+			</props>
+		</property>
+	</bean>
+	
+	<bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" depends-on="lifecycleBeanPostProcessor" />
+	
+	
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/admin/**" />
+			<bean id="executeTimeInterceptor" class="com.framework.loippi.interceptor.ExecuteTimeInterceptor" />
+		</mvc:interceptor>
+		
+		<mvc:interceptor>
+			<mvc:mapping path="/admin/**" />
+			<bean id="webContentInterceptor" class="org.springframework.web.servlet.mvc.WebContentInterceptor">
+				<property name="cacheSeconds" value="0" />
+			</bean>
+		</mvc:interceptor>
+		<mvc:interceptor>
+			<mvc:mapping path="/admin/**" />
+			<bean id="listInterceptor" class="com.framework.loippi.interceptor.ListInterceptor" />
+		</mvc:interceptor>
+		<mvc:interceptor>
+			<mvc:mapping path="/admin/**" />
+			<bean id="logInterceptor" class="com.framework.loippi.interceptor.LogInterceptor" />
+		</mvc:interceptor>
+		<mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<mvc:exclude-mapping path="/api/**"/>
+			<bean id="tokenInterceptor" class="com.framework.loippi.interceptor.TokenInterceptor" />
+		</mvc:interceptor>
+		<mvc:interceptor>
+			<mvc:mapping path="/api/**"/>		
+			<mvc:exclude-mapping path="/api/common/**"/>
+			<bean id="authenticationInterceptor" class="com.framework.loippi.interceptor.AuthenticationInterceptor" />
+		</mvc:interceptor> 
+	</mvc:interceptors>
+	
+	<mvc:annotation-driven/>
+	
+	<bean class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+		<property name="favorPathExtension" value="true"/>
+		<property name="mediaTypes">
+			<map>
+				<entry key="json" value="application/json"/>
+				<entry key="jsonp" value="application/javascript"/>
+				<entry key="jhtml" value="text/html" />
+			</map>
+		</property>
+		<property name="defaultViews">
+			<list>
+				<bean class="org.springframework.web.servlet.view.json.MappingJackson2JsonView"/>
+			</list>
+		</property>
+            <property name="defaultContentType" value="text/html" />
+	</bean>
+
+	<bean id="viewResolver"
+		class="org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver">
+		<property name="contentType" value="text/html; charset=UTF-8" />
+		<property name="suffix" value="${template.suffix}" />
+	</bean>
+
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding" value="utf-8" />
+	</bean>
+
+	<bean id="exceptionResolver"
+		class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="defaultErrorView" value="admin/common/error" />
+	</bean>
+	
+	<!-- 配置kaptcha验证码 -->  
+<bean id="captchaProducer" class="com.google.code.kaptcha.impl.DefaultKaptcha">  
+    <property name="config">  
+        <bean class="com.google.code.kaptcha.util.Config">  
+            <constructor-arg type="java.util.Properties">  
+                <props>  
+                    <prop key="kaptcha.image.width">100</prop>  
+                    <prop key="kaptcha.image.height">50</prop>  
+                    <prop key="kaptcha.noise.impl">com.google.code.kaptcha.impl.NoNoise</prop>  
+                    <prop key="kaptcha.textproducer.char.string">QWERTYUIOPLKJHGFDSAZXCVBNM</prop>  
+                    <prop key="kaptcha.textproducer.char.length">4</prop>  
+                </props>  
+            </constructor-arg>  
+        </bean>  
+    </property> 
+</bean>
+</beans>

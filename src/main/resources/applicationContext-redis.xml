@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+    <bean id="jedisCache" class="com.framework.loippi.utils.redis.JedisCache" scope="singleton">
+        <property name="pool" ref="jedisCachePool"/>  
+    </bean>
+    <bean id="jedisCachePool" class="redis.clients.jedis.JedisPool">
+       <constructor-arg name="poolConfig" ref="jedisPoolCofig"/>
+        <constructor-arg name="host" value="127.0.0.1"/>
+        <constructor-arg name="port" value="6379"/>
+        <constructor-arg name="timeout" value="100000"/>
+    <!--
+     <constructor-arg name="host" value="203.195.168.151"/>
+    <constructor-arg name="password" value="myredis"/> 
+    
+     -->  
+    </bean>
+    <bean id="jedisPoolCofig" class="redis.clients.jedis.JedisPoolConfig">
+        <property name="maxActive" value="1000"/>
+        <property name="maxIdle" value="50"/>
+        <property name="maxWait" value="1000"/>
+    </bean>
+
+</beans>
